@@ -1,0 +1,36 @@
+Package: KNN.normalization
+Title: Neighbor-Based Normalization of CITE-Seq Protein Data
+Version: 0.1.0
+Authors@R: 
+    person("Javier", "Marchena-Hurtado", , "javier.marchena.hurtado@gmail.com", role = c("aut", "cre", "cph"))
+Description: KNN normalization is a normalization method for protein counts in
+    CITE-seq data. It learns from neighbor cells in a k-nearest-neighbor (KNN)
+    graph in order to estimate the appropriate total protein counts in each
+    cell, accurately estimating total protein counts while preserving
+    biological information. This package works on 'Seurat' objects and is the
+    R counterpart of the Python package 'KNN_normalization', which is based on
+    'scanpy'.
+License: MIT + file LICENSE
+URL: https://github.com/javier-marchena-hurtado/KNN_normalization_R,
+    https://github.com/javier-marchena-hurtado/KNN_normalization
+BugReports: https://github.com/javier-marchena-hurtado/KNN_normalization_R/issues
+Depends: 
+    R (>= 4.1.0)
+Imports: 
+    irlba,
+    Matrix,
+    matrixStats,
+    methods,
+    parallel,
+    Seurat (>= 5.0.0),
+    SeuratObject (>= 5.0.0),
+    stats
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.1

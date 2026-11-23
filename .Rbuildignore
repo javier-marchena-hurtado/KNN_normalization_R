@@ -1,0 +1,13 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^README\.Rmd$
+^\.github$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^vignettes/.*\.orig$
+^vignettes/precompile\.R$
+^_pkgdown\.yml$
+^docs$
+^images$
+^\.vscode$

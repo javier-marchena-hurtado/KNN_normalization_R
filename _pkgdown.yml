@@ -1,0 +1,8 @@
+url: ~
+template:
+  bootstrap: 5
+reference:
+  - title: Normalization
+    contents:
+      - knn_normalize
+      - normalize_with_neighbors
