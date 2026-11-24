@@ -10,6 +10,7 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  error = FALSE,
   comment = "#>",
   fig.path = "tutorial-",
   fig.width = 9,
@@ -27,61 +28,51 @@ It is precomputed, since the data is not part of the package.
 ```{r packages, message = FALSE}
 library(KNN.normalization)
 library(Seurat)
-library(anndata) # only needed to read the .h5ad files of this tutorial
 library(ggplot2)
 ```
 
 ## Loading the data
 
-We use our Immune Colon data for this tutorial (SAY HOW TO DOWNLOAD IT).
-The data is stored in `.h5ad` files (the format of the Python package), so we read it with the
-[anndata](https://anndata.dynverse.org) R package. If your data is already a Seurat object,
-skip this part.
+We use our Immune Colon data for this tutorial (SAY HOW TO DOWNLOAD IT). It is distributed as a
+Seurat object (the Python tutorial uses the equivalent `.h5ad` files).
 
 ```{r load-data}
 DATA_DIR <- "/groups/nils/members/javier/KNN_normalization_paper_code"
-prot <- read_h5ad(file.path(DATA_DIR, "Immune_colon_protein_data.h5ad"))
-rna <- read_h5ad(file.path(DATA_DIR, "Immune_colon_rna_data.h5ad"))
-```
-
-```{r show-prot}
-prot
-```
-
-```{r show-rna}
-rna
-```
-
-```{r show-prot-x}
-prot$X[1:5, 1:5]
-```
-
-Our `prot$X` consists of raw counts, as is expected by KNN normalization.
-
-We now build a [Seurat](https://satijalab.org/seurat/) object with the protein (`ADT`) and RNA
-(`RNA`) assays. Seurat stores features x cells, whereas AnnData stores cells x features, so we
-transpose the matrices. KNN normalization reads the raw counts from the `counts` layer of both
-assays.
-
-```{r build-seurat}
-# Both assays must contain the same cells (4075 here)
-seurat_object <- CreateSeuratObject(
-  counts = as(t(rna$X), "CsparseMatrix"),
-  assay = "RNA",
-  meta.data = prot$obs
-)
-seurat_object[["ADT"]] <- CreateAssay5Object(counts = as(t(prot$X), "CsparseMatrix"))
+seurat_object <- readRDS(file.path(DATA_DIR, "Immune_colon_seurat.rds"))
 ```
 
 ```{r show-seurat}
 seurat_object
 ```
 
+The object has two assays, `RNA` and `ADT` (protein), for the same 4075 cells. Besides the raw
+counts, it contains some extra layers that we do not need in this tutorial, so we keep only the
+`counts` layer of each assay.
+
+```{r diet}
+seurat_object <- DietSeurat(seurat_object, layers = "counts")
+seurat_object
+```
+
+```{r show-prot-x}
+LayerData(seurat_object, assay = "ADT", layer = "counts")[1:5, 1:5]
+```
+
+The `counts` layer of the `ADT` assay consists of raw counts, as is expected by KNN normalization.
+KNN normalization reads the raw counts from the `counts` layer of both assays. Seurat stores
+features x cells (AnnData stores cells x features).
+
+If you have your own data, any Seurat object with an `RNA` and an `ADT` assay and raw counts in the
+`counts` layers works. Keep a copy of the untouched object for the later sections of this tutorial
+(in R, this is free until one of the copies is modified):
+
+```{r keep-copy}
+original_object <- seurat_object
+```
+
 ## Running KNN normalization with a Seurat object (using neighbors from RNA)
 
 ### Run KNN normalization on the Seurat object, using `calculate_neighbors_from = "rna"`
-
-Unlike in Python, where the object is modified in place, in R we assign the result.
 
 ```{r knn-rna}
 seurat_object <- knn_normalize(seurat_object, calculate_neighbors_from = "rna")
@@ -104,9 +95,7 @@ If you don't want to print progress messages, pass `verbose = FALSE`.
 ### Downstream analysis
 
 We generally recommend to z-score (scale) the data per protein. Since we have several samples, we
-do the scaling per sample, which will additionally partly integrate the data. In Seurat, the
-scaled data goes to its own layer, so (unlike in Python) the KNN-normalized values in the `data`
-layer are not overwritten and we do not need to keep a copy.
+do the scaling per sample, which will additionally partly integrate the data.
 
 ```{r downstream}
 DefaultAssay(seurat_object) <- "ADT"
@@ -141,11 +130,9 @@ differences in total counts between cell types (plasma cells tend to have higher
 A Seurat object with only the protein assay works too, with `calculate_neighbors_from = "prot"`.
 
 ```{r knn-prot}
-prot_object <- CreateSeuratObject(
-  counts = as(t(prot$X), "CsparseMatrix"),
-  assay = "ADT",
-  meta.data = prot$obs
-)
+prot_object <- original_object
+DefaultAssay(prot_object) <- "ADT"
+prot_object <- DietSeurat(prot_object, assays = "ADT", layers = "counts")
 prot_object <- knn_normalize(prot_object, calculate_neighbors_from = "prot")
 ```
 
@@ -163,15 +150,10 @@ As an example, we normalize, log-transform, select 2000 HVGs and run PCA on the 
 20 PCs to calculate RNA neighbors.
 
 ```{r reload}
-prot_object <- CreateSeuratObject(
-  counts = as(t(prot$X), "CsparseMatrix"),
-  assay = "ADT",
-  meta.data = prot$obs
-)
-prot_object[["RNA"]] <- CreateAssay5Object(counts = as(t(rna$X), "CsparseMatrix"))
+prot_object <- original_object
 ```
 
-```{r user-graph}
+```{r user-graph, warning = FALSE}
 DefaultAssay(prot_object) <- "RNA"
 # Split the RNA layers by sample, so that the HVGs are selected taking the samples into account
 prot_object[["RNA"]] <- split(prot_object[["RNA"]], f = prot_object$sample)
@@ -184,9 +166,7 @@ prot_object[["RNA"]] <- JoinLayers(prot_object[["RNA"]])
 Graphs(prot_object)
 ```
 
-The KNN graph (`RNA_nn`) lives in the same Seurat object as the protein data, so, unlike in
-Python, we do not need to transfer it between objects. We perform KNN normalization with the
-existing neighbors.
+We perform KNN normalization with the existing neighbors.
 
 ```{r knn-existing}
 prot_object <- knn_normalize(

@@ -20,72 +20,18 @@ It is precomputed, since the data is not part of the package.
 ``` r
 library(KNN.normalization)
 library(Seurat)
-library(anndata) # only needed to read the .h5ad files of this tutorial
 library(ggplot2)
 ```
 
 ## Loading the data
 
-We use our Immune Colon data for this tutorial (SAY HOW TO DOWNLOAD IT).
-The data is stored in `.h5ad` files (the format of the Python package), so we read it with the
-[anndata](https://anndata.dynverse.org) R package. If your data is already a Seurat object,
-skip this part.
+We use our Immune Colon data for this tutorial (SAY HOW TO DOWNLOAD IT). It is distributed as a
+Seurat object (the Python tutorial uses the equivalent `.h5ad` files).
 
 
 ``` r
 DATA_DIR <- "/groups/nils/members/javier/KNN_normalization_paper_code"
-prot <- read_h5ad(file.path(DATA_DIR, "Immune_colon_protein_data.h5ad"))
-rna <- read_h5ad(file.path(DATA_DIR, "Immune_colon_rna_data.h5ad"))
-```
-
-
-``` r
-prot
-#> AnnData object with n_obs × n_vars = 4075 × 61
-#>     obs: 'RNA-based_cell_type_coarse', 'RNA-based_cell_type_detailed', 'CITE-seq-based_cell_type_coarse', 'CITE-seq-based_cell_type_detailed', 'TCR', 'clonal_expansion', 'clone_size', 'clone_id', 'cytotoxicity_signature', 'exhaustion_signature', 'sample', 'patient', 'origin'
-#>     uns: 'CITE-seq-based_cell_type_coarse_colors', 'CITE-seq-based_cell_type_detailed_colors', 'RNA-based_cell_type_coarse_colors', 'sample_colors'
-#>     obsm: 'KNN_scaled_CytoVI_embedding', 'UMAP_KNN_scaled_CytoVI_embedding', 'X_umap'
-#>     layers: 'KNN_normalized_w_RNA_neighbors', 'KNN_normalized_w_RNA_neighbors_and_z-scored_per_sample'
-```
-
-
-``` r
-rna
-#> AnnData object with n_obs × n_vars = 4075 × 25154
-#>     obs: 'RNA-based_cell_type_coarse', 'RNA-based_cell_type_detailed', 'CITE-seq-based_cell_type_coarse', 'CITE-seq-based_cell_type_detailed', 'TCR', 'clonal_expansion', 'clone_size', 'clone_id', 'cytotoxicity_signature', 'exhaustion_signature', 'sample', 'patient', 'origin'
-#>     var: 'gene_id', 'source', 'chromosome', 'start', 'end', 'strand'
-#>     uns: 'CITE-seq-based_cell_type_coarse_colors', 'CITE-seq-based_cell_type_detailed_colors', 'RNA-based_cell_type_coarse_colors', 'sample_colors'
-#>     obsm: 'X_umap'
-#>     layers: 'cellranger_counts', 'normalized_and_log', 'normalized_log_and_z-scored_per_sample', 'soupX_counts'
-```
-
-
-``` r
-prot$X[1:5, 1:5]
-#>                           CD19 CD33 CD11c CD10 CD45RA
-#> AAACGGGCACAACGCC-p026n_TS   17    9    34   52     11
-#> AAAGATGTCTTGAGAC-p026n_TS   91    8    34   51     16
-#> AAAGCAACACCGTTGG-p026n_TS   18    8    39   53     18
-#> AAAGCAAGTAGCTCCG-p026n_TS   18   13    29   61     23
-#> AACACGTAGCAGACTG-p026n_TS    9    9    40   59     24
-```
-
-Our `prot$X` consists of raw counts, as is expected by KNN normalization.
-
-We now build a [Seurat](https://satijalab.org/seurat/) object with the protein (`ADT`) and RNA
-(`RNA`) assays. Seurat stores features x cells, whereas AnnData stores cells x features, so we
-transpose the matrices. KNN normalization reads the raw counts from the `counts` layer of both
-assays.
-
-
-``` r
-# Both assays must contain the same cells (4075 here)
-seurat_object <- CreateSeuratObject(
-  counts = as(t(rna$X), "CsparseMatrix"),
-  assay = "RNA",
-  meta.data = prot$obs
-)
-seurat_object[["ADT"]] <- CreateAssay5Object(counts = as(t(prot$X), "CsparseMatrix"))
+seurat_object <- readRDS(file.path(DATA_DIR, "Immune_colon_seurat.rds"))
 ```
 
 
@@ -94,8 +40,61 @@ seurat_object
 #> An object of class Seurat 
 #> 25215 features across 4075 samples within 2 assays 
 #> Active assay: RNA (25154 features, 0 variable features)
+#>  4 layers present: counts, cellranger_counts, normalized_and_log, soupX_counts
+#>  1 other assay present: ADT
+#>  4 dimensional reductions calculated: umap_protein, umap_rna, cytovi, umap_cytovi
+```
+
+The object has two assays, `RNA` and `ADT` (protein), for the same 4075 cells. Besides the raw
+counts, it contains some extra layers that we do not need in this tutorial, so we keep only the
+`counts` layer of each assay.
+
+
+``` r
+seurat_object <- DietSeurat(seurat_object, layers = "counts")
+seurat_object
+#> An object of class Seurat 
+#> 25215 features across 4075 samples within 2 assays 
+#> Active assay: RNA (25154 features, 0 variable features)
 #>  1 layer present: counts
 #>  1 other assay present: ADT
+```
+
+
+``` r
+LayerData(seurat_object, assay = "ADT", layer = "counts")[1:5, 1:5]
+#> 5 x 5 sparse Matrix of class "dgCMatrix"
+#>        AAACGGGCACAACGCC-p026n_TS AAAGATGTCTTGAGAC-p026n_TS
+#> CD19                          17                        91
+#> CD33                           9                         8
+#> CD11c                         34                        34
+#> CD10                          52                        51
+#> CD45RA                        11                        16
+#>        AAAGCAACACCGTTGG-p026n_TS AAAGCAAGTAGCTCCG-p026n_TS
+#> CD19                          18                        18
+#> CD33                           8                        13
+#> CD11c                         39                        29
+#> CD10                          53                        61
+#> CD45RA                        18                        23
+#>        AACACGTAGCAGACTG-p026n_TS
+#> CD19                           9
+#> CD33                           9
+#> CD11c                         40
+#> CD10                          59
+#> CD45RA                        24
+```
+
+The `counts` layer of the `ADT` assay consists of raw counts, as is expected by KNN normalization.
+KNN normalization reads the raw counts from the `counts` layer of both assays. Seurat stores
+features x cells (AnnData stores cells x features).
+
+If you have your own data, any Seurat object with an `RNA` and an `ADT` assay and raw counts in the
+`counts` layers works. Keep a copy of the untouched object for the later sections of this tutorial
+(in R, this is free until one of the copies is modified):
+
+
+``` r
+original_object <- seurat_object
 ```
 
 ## Running KNN normalization with a Seurat object (using neighbors from RNA)
@@ -245,11 +244,9 @@ A Seurat object with only the protein assay works too, with `calculate_neighbors
 
 
 ``` r
-prot_object <- CreateSeuratObject(
-  counts = as(t(prot$X), "CsparseMatrix"),
-  assay = "ADT",
-  meta.data = prot$obs
-)
+prot_object <- original_object
+DefaultAssay(prot_object) <- "ADT"
+prot_object <- DietSeurat(prot_object, assays = "ADT", layers = "counts")
 prot_object <- knn_normalize(prot_object, calculate_neighbors_from = "prot")
 #> Calculating KNN graph from protein data
 #> Running KNN normalization
@@ -338,12 +335,7 @@ As an example, we normalize, log-transform, select 2000 HVGs and run PCA on the 
 
 
 ``` r
-prot_object <- CreateSeuratObject(
-  counts = as(t(prot$X), "CsparseMatrix"),
-  assay = "ADT",
-  meta.data = prot$obs
-)
-prot_object[["RNA"]] <- CreateAssay5Object(counts = as(t(rna$X), "CsparseMatrix"))
+prot_object <- original_object
 ```
 
 
@@ -353,38 +345,6 @@ DefaultAssay(prot_object) <- "RNA"
 prot_object[["RNA"]] <- split(prot_object[["RNA"]], f = prot_object$sample)
 prot_object <- NormalizeData(prot_object, verbose = FALSE)
 prot_object <- FindVariableFeatures(prot_object, nfeatures = 2000, verbose = FALSE)
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : pseudoinverse used at -2.4262
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : neighborhood radius 0.50188
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : reciprocal condition number 4.6971e-16
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : There are other near singularities as well. 0.090619
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : pseudoinverse used at -2.2403
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : neighborhood radius 0.49995
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : reciprocal condition number 1.7698e-16
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : There are other near singularities as well. 0.090619
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : pseudoinverse used at -2.1976
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : neighborhood radius 0.50157
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : reciprocal condition number 1.0376e-15
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : There are other near singularities as well. 0.090619
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : pseudoinverse used at -1.9084
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : neighborhood radius 0.32291
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : reciprocal condition number 8.6755e-31
-#> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-#> : There are other near singularities as well. 0.090619
 prot_object <- ScaleData(prot_object, verbose = FALSE)
 prot_object <- RunPCA(prot_object, npcs = 20, verbose = FALSE)
 prot_object <- FindNeighbors(prot_object, dims = 1:20, k.param = 15, verbose = FALSE)

@@ -9,5 +9,4 @@
 ^vignettes/precompile\.R$
 ^_pkgdown\.yml$
 ^docs$
-^images$
 ^\.vscode$

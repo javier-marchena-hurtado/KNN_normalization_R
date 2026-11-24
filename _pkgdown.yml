@@ -1,6 +1,19 @@
-url: ~
+url: https://javier-marchena-hurtado.github.io/KNN_normalization_R/
 template:
   bootstrap: 5
+navbar:
+  structure:
+    left: [tutorial, reference, news]
+    right: [search, github]
+  components:
+    tutorial:
+      text: Tutorial
+      href: articles/tutorial.html
+articles:
+  - title: Tutorial
+    navbar: ~
+    contents:
+      - tutorial
 reference:
   - title: Normalization
     contents:

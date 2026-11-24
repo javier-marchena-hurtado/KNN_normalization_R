@@ -11,7 +11,8 @@ Description: KNN normalization is a normalization method for protein counts in
     R counterpart of the Python package 'KNN_normalization', which is based on
     'scanpy'.
 License: MIT + file LICENSE
-URL: https://github.com/javier-marchena-hurtado/KNN_normalization_R,
+URL: https://javier-marchena-hurtado.github.io/KNN_normalization_R/,
+    https://github.com/javier-marchena-hurtado/KNN_normalization_R,
     https://github.com/javier-marchena-hurtado/KNN_normalization
 BugReports: https://github.com/javier-marchena-hurtado/KNN_normalization_R/issues
 Depends: 
