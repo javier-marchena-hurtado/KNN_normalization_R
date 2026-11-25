@@ -36,11 +36,7 @@ seurat_object <- readRDS("path/to/your/data.rds")
 seurat_object <- knn_normalize(seurat_object)
 ```
 
-Unlike in Python, objects are not modified in place: assign the result.
-The raw counts in the `counts` layer are left untouched.
-See `?knn_normalize` for details.
-
-For a full walkthrough (neighbors from RNA or protein, downstream analysis, your own KNN graph), see the [tutorial][].
+See `?knn_normalize` for details. For a full walkthrough (neighbors from RNA or protein, downstream analysis, your own KNN graph), see the [tutorial][].
 
 ## Documentation
 
