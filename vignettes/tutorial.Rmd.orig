@@ -18,10 +18,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This tutorial is the R counterpart of the
-[tutorial of the Python package](https://knn-normalization.readthedocs.io): it has the same
-content, but uses Seurat objects instead of `MuData` and `AnnData` objects.
-It is precomputed, since the data is not part of the package.
+This tutorial is precomputed, since the data is not part of the package.
 
 ## Loading packages
 
@@ -34,7 +31,7 @@ library(ggplot2)
 ## Loading the data
 
 We use our Immune Colon data for this tutorial (SAY HOW TO DOWNLOAD IT). It is distributed as a
-Seurat object (the Python tutorial uses the equivalent `.h5ad` files).
+Seurat object.
 
 ```{r load-data}
 DATA_DIR <- "/groups/nils/members/javier/KNN_normalization_paper_code"
@@ -63,8 +60,7 @@ KNN normalization reads the raw counts from the `counts` layer of both assays. S
 features x cells (AnnData stores cells x features).
 
 If you have your own data, any Seurat object with an `RNA` and an `ADT` assay and raw counts in the
-`counts` layers works. Keep a copy of the untouched object for the later sections of this tutorial
-(in R, this is free until one of the copies is modified):
+`counts` layers works. Keep a copy of the untouched object for the later sections of this tutorial:
 
 ```{r keep-copy}
 original_object <- seurat_object
@@ -95,7 +91,8 @@ If you don't want to print progress messages, pass `verbose = FALSE`.
 ### Downstream analysis
 
 We generally recommend to z-score (scale) the data per protein. Since we have several samples, we
-do the scaling per sample, which will additionally partly integrate the data.
+do the scaling per sample, which will additionally partly integrate the data. The
+scaled data goes to its own layer.
 
 ```{r downstream}
 DefaultAssay(seurat_object) <- "ADT"

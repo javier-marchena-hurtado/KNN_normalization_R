@@ -9,10 +9,7 @@ vignette: >
 
 
 
-This tutorial is the R counterpart of the
-[tutorial of the Python package](https://knn-normalization.readthedocs.io): it has the same
-content, but uses Seurat objects instead of `MuData` and `AnnData` objects.
-It is precomputed, since the data is not part of the package.
+This tutorial is precomputed, since the data is not part of the package.
 
 ## Loading packages
 
@@ -26,7 +23,7 @@ library(ggplot2)
 ## Loading the data
 
 We use our Immune Colon data for this tutorial (SAY HOW TO DOWNLOAD IT). It is distributed as a
-Seurat object (the Python tutorial uses the equivalent `.h5ad` files).
+Seurat object.
 
 
 ``` r
@@ -89,8 +86,7 @@ KNN normalization reads the raw counts from the `counts` layer of both assays. S
 features x cells (AnnData stores cells x features).
 
 If you have your own data, any Seurat object with an `RNA` and an `ADT` assay and raw counts in the
-`counts` layers works. Keep a copy of the untouched object for the later sections of this tutorial
-(in R, this is free until one of the copies is modified):
+`counts` layers works. Keep a copy of the untouched object for the later sections of this tutorial:
 
 
 ``` r
@@ -101,7 +97,6 @@ original_object <- seurat_object
 
 ### Run KNN normalization on the Seurat object, using `calculate_neighbors_from = "rna"`
 
-Unlike in Python, where the object is modified in place, in R we assign the result.
 
 
 ``` r
@@ -193,9 +188,8 @@ If you don't want to print progress messages, pass `verbose = FALSE`.
 ### Downstream analysis
 
 We generally recommend to z-score (scale) the data per protein. Since we have several samples, we
-do the scaling per sample, which will additionally partly integrate the data. In Seurat, the
-scaled data goes to its own layer, so (unlike in Python) the KNN-normalized values in the `data`
-layer are not overwritten and we do not need to keep a copy.
+do the scaling per sample, which will additionally partly integrate the data. The
+scaled data goes to its own layer.
 
 
 ``` r
