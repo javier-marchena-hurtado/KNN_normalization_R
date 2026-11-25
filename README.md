@@ -21,7 +21,12 @@ Install the development version of `KNN.normalization` from [GitHub](https://git
 remotes::install_github("javier-marchena-hurtado/KNN_normalization_R")
 ```
 
-To also install the tutorial vignette locally, use `remotes::install_github("javier-marchena-hurtado/KNN_normalization_R", build_vignettes = TRUE)`.
+To also install the tutorial vignette locally, first install the packages needed to build it, and then use `build_vignettes = TRUE`:
+
+```r
+install.packages(c("knitr", "rmarkdown"))
+remotes::install_github("javier-marchena-hurtado/KNN_normalization_R", build_vignettes = TRUE)
+```
 
 ## Basic usage
 
